@@ -15,12 +15,10 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/search", tags=["Busca"])
+@router.get("/", tags=["Busca"])
 def search_records(
     TckrSymb: Optional[str] = Query(None),
     RptDt: Optional[str] = Query(None),  # no formato YYYY-MM-DD
-    page: int = 1,
-    page_size: int = 20,
     db: Session = Depends(get_db)
 ):
     query = db.query(models.Record)
@@ -31,9 +29,6 @@ def search_records(
         except Exception:
             raise HTTPException(status_code=400, detail="Formato de RptDt inválido. Utilize YYYY-MM-DD.")
         query = query.filter(models.Record.TckrSymb == TckrSymb, models.Record.RptDt == rpt_date)
-    elif not TckrSymb and not RptDt:
-        # Paginação quando não são enviados parâmetros
-        query = query.offset((page - 1) * page_size).limit(page_size)
     else:
         # Se apenas um dos parâmetros for enviado, podemos decidir se a busca é permitida ou não
         raise HTTPException(status_code=400, detail="Envie ambos os parâmetros ou nenhum para paginação.")
@@ -41,15 +36,31 @@ def search_records(
     results = query.all()
     
     # Formata o retorno com os campos esperados
+
     response = []
     for r in results:
         response.append({
             "RptDt": r.RptDt.strftime("%Y-%m-%d"),
             "TckrSymb": r.TckrSymb,
+            "Asst": r.Asst,
+            "AsstDesc": r.AsstDesc,
+            "SgmtNm": r.SgmtNm,
             "MktNm": r.MktNm,
             "SctyCtgyNm": r.SctyCtgyNm,
+            "XprtnCd": r.XprtnCd,
+            "TradgStartDt": r.TradgStartDt,
+            "TradgEndDt": r.TradgEndDt,
+            "eCd": r.eCd,
+            "ConvsCritNm": r.ConvsCritNm,
+            "MtrtyDtTrgtPt": r.MtrtyDtTrgtPt,
+            "ReqrdConvsInd": r.ReqrdConvsInd,
             "ISIN": r.ISIN,
-            "CrpnNm": r.CrpnNm
+            "CFICd": r.CFICd,
+            "DlvryNtceStartDt": r.DlvryNtceStartDt,
+            "DlvryNtceEndDt": r.DlvryNtceEndDt,
+            "OptnTp": r.OptnTp,
+            "CtrctMltplr": r.CtrctMltplr
+            
         })
     
     return response

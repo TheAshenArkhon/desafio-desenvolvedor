@@ -15,7 +15,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/history", tags=["Histórico"])
+@router.get("/", tags=["Histórico"])
 def get_upload_history(
     file_name: Optional[str] = Query(None),
     reference_date: Optional[str] = Query(None),  # no formato YYYY-MM-DD

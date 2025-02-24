@@ -19,7 +19,7 @@ def get_db():
 def calcular_hash(file_bytes: bytes) -> str:
     return hashlib.md5(file_bytes).hexdigest()
 
-@router.post("/upload", tags=["Upload"])
+@router.post("/", tags=["Upload"])
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     # Validação do tipo de arquivo
     if not file.filename.endswith((".csv", ".xlsx", ".xls")):
@@ -48,8 +48,14 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo: {str(e)}")
     
-    # Validação e mapeamento dos dados (adaptar conforme necessidade)
-    expected_columns = {"RptDt", "TckrSymb", "MktNm", "SctyCtgyNm", "ISIN", "CrpnNm"}
+    # Validação e mapeamento dos dados
+    expected_columns = {"RptDt", "TckrSymb", "Asst", "AsstDesc", "SgmtNm", "MktNm", "SctyCtgyNm", "XprtnDt", "XprtnCd", "TradgStartDt",
+                        "TradgEndDt", "eCd", "ConvsCritNm", "MtrtyDtTrgtPt", "ReqrdConvsInd", "ISIN", "CFICd", "DlvryNtceStartDt",
+                        "DlvryNtceEndDt", "OptnTp", "CtrctMltplr", "AsstQtnQty", "AllcnRndLot", "TradgCcy", "DlvryTpNm", "WdrwlDays",
+                        "WrkgDays", "ClnrDays", "RlvrBasePricNm", "OpngFutrPosDay", "SdTpCd1", "UndrlygTckrSymb1", "SdTpCd2",
+                        "UndrlygTckrSymb2", "PureGoldWght", "ExrcPric", "OptnStyle", "ValTpNm", "PrmUpfrntInd", "OpngPosLmtDt",
+                        "DstrbtnId", "PricFctr", "DaysToSttlm", "SrsTpNm", "PrtcnFlg", "AutomtcExrcInd", "SpcfctnCd", "CrpnNm",
+                        "CorpActnStartDt", "CtdyTrtmntTpNm", "MktCptlstn", "CorpGovnLvlNm"}
     if not expected_columns.issubset(set(df.columns)):
         raise HTTPException(status_code=400, detail="Arquivo não possui todas as colunas obrigatórias.")
     
@@ -59,10 +65,56 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         record = models.Record(
             RptDt=row["RptDt"],
             TckrSymb=row["TckrSymb"],
+            Asst=row["Asst"],
+            AsstDesc=row["AsstDesc"],
+            SgmtNm=row["SgmtNm"],
             MktNm=row["MktNm"],
             SctyCtgyNm=row["SctyCtgyNm"],
+            XprtnDt=row["XprtnDt"],
+            XprtnCd=row["XprtnCd"],
+            TradgStartDt=row["TradgStartDt"],
+            TradgEndDt=row["TradgEndDt"],
+            eCd=row["eCd"],
+            ConvsCritNm=row["ConvsCritNm"],
+            MtrtyDtTrgtPt=row["MtrtyDtTrgtPt"],
+            ReqrdConvsInd=row["ReqrdConvsInd"],
             ISIN=row["ISIN"],
+            CFICd=row["CFICd"],
+            DlvryNtceStartDt=row["DlvryNtceStartDt"],\
+            DlvryNtceEndDt=row["DlvryNtceEndDt"],
+            OptnTp=row["OptnTp"],
+            CtrctMltplr=row["CtrctMltplr"],
+            AsstQtnQty=row["AsstQtnQty"],
+            AllcnRndLot=row["AllcnRndLot"],
+            TradgCcy=row["TradgCcy"],
+            DlvryTpNm=row["DlvryTpNm"],
+            WdrwlDays=row["WdrwlDays"],
+            WrkgDays=row["WrkgDays"],
+            ClnrDays=row["ClnrDays"],
+            RlvrBasePricNm=row["RlvrBasePricNm"],
+            OpngFutrPosDay=row["OpngFutrPosDay"],
+            SdTpCd1=row["SdTpCd1"],
+            UndrlygTckrSymb1=row["UndrlygTckrSymb1"],
+            SdTpCd2=row["SdTpCd2"],
+            UndrlygTckrSymb2=row["UndrlygTckrSymb2"],
+            PureGoldWght=row["PureGoldWght"],
+            ExrcPric=row["ExrcPric"],
+            OptnStyle=row["OptnStyle"],
+            ValTpNm=row["ValTpNm"],
+            PrmUpfrntInd=row["PrmUpfrntInd"],
+            OpngPosLmtDt=row["OpngPosLmtDt"],
+            DstrbtnId=row["DstrbtnId"],
+            PricFctr=row["PricFctr"],
+            DaysToSttlm=row["DaysToSttlm"],
+            SrsTpNm=row["SrsTpNm"],
+            PrtcnFlg=row["PrtcnFlg"],
+            AutomtcExrcInd=row["AutomtcExrcInd"],
+            SpcfctnCd=row["SpcfctnCd"],
             CrpnNm=row["CrpnNm"],
+            CorpActnStartDt=row["CorpActnStartDt"],
+            CtdyTrtmntTpNm=row["CtdyTrtmntTpNm"],
+            MktCptlstn=row["MktCptlstn"],
+            CorpGovnLvlNm=row["CorpGovnLvlNm"]
         )
         records.append(record)
     

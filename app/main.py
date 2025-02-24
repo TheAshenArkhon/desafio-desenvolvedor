@@ -11,6 +11,10 @@ app = FastAPI(
     openapi_url="/openapi.json"  # Especificação OpenAPI
     )
 
-app.include_router(upload.router)
-app.include_router(history.router)
-app.include_router(search.router)
+app.include_router(upload.router, prefix="/upload", tags=["Upload"])
+app.include_router(history.router, prefix="/history", tags=["Histórico"])
+app.include_router(search.router, prefix="/search", tags=["Busca"])
+
+@app.get("/")
+def read_root():
+    return {"message": "API funcionando! use /docs no url para acessar a documentação."}
