@@ -49,13 +49,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo: {str(e)}")
     
     # Validação e mapeamento dos dados
-    expected_columns = {"RptDt", "TckrSymb", "Asst", "AsstDesc", "SgmtNm", "MktNm", "SctyCtgyNm", "XprtnDt", "XprtnCd", "TradgStartDt",
-                        "TradgEndDt", "eCd", "ConvsCritNm", "MtrtyDtTrgtPt", "ReqrdConvsInd", "ISIN", "CFICd", "DlvryNtceStartDt",
-                        "DlvryNtceEndDt", "OptnTp", "CtrctMltplr", "AsstQtnQty", "AllcnRndLot", "TradgCcy", "DlvryTpNm", "WdrwlDays",
-                        "WrkgDays", "ClnrDays", "RlvrBasePricNm", "OpngFutrPosDay", "SdTpCd1", "UndrlygTckrSymb1", "SdTpCd2",
-                        "UndrlygTckrSymb2", "PureGoldWght", "ExrcPric", "OptnStyle", "ValTpNm", "PrmUpfrntInd", "OpngPosLmtDt",
-                        "DstrbtnId", "PricFctr", "DaysToSttlm", "SrsTpNm", "PrtcnFlg", "AutomtcExrcInd", "SpcfctnCd", "CrpnNm",
-                        "CorpActnStartDt", "CtdyTrtmntTpNm", "MktCptlstn", "CorpGovnLvlNm"}
+    expected_columns = {"RptDt", "TckrSymb", "MktNm", "SctyCtgyNm", "ISIN", "CFICd", "CrpnNm"}
     if not expected_columns.issubset(set(df.columns)):
         raise HTTPException(status_code=400, detail="Arquivo não possui todas as colunas obrigatórias.")
     
