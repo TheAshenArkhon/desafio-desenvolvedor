@@ -18,3 +18,7 @@ app.include_router(search.router, prefix="/search", tags=["Busca"])
 @app.get("/")
 def read_root():
     return {"message": "API funcionando! use /docs no url para acessar a documentação."}
+
+
+# Para rodar a aplicação, execute o comando abaixo:
+# python -m uvicorn app.main:app --reload
