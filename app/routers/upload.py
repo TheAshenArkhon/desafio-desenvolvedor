@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import models
+from datetime import datetime
 
 router = APIRouter()
 
@@ -42,77 +43,53 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     # Processa o arquivo e insere os registros
     try:
         if file.filename.endswith(".csv"):
-            df = pd.read_csv(io.BytesIO(file_bytes))
+            try:
+                # Pular as duas primeiras linhas e garantir que a segunda linha seja usada como cabeçalho
+                df = pd.read_csv(io.BytesIO(file_bytes), sep=";", header=1, encoding="utf-8", on_bad_lines="skip")
+            except UnicodeDecodeError:
+                df = pd.read_csv(io.BytesIO(file_bytes), sep=";", header=1, encoding="ISO-8859-1", on_bad_lines="skip")
         else:
-            df = pd.read_excel(io.BytesIO(file_bytes))
+            df = pd.read_excel(io.BytesIO(file_bytes), header=1)  # No Excel, usa a segunda linha como cabeçalho
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo: {str(e)}")
     
+    # Normaliza os nomes das colunas removendo espaços extras
+    df.columns = df.columns.str.strip()
+
     # Validação e mapeamento dos dados
-    expected_columns = {"RptDt", "TckrSymb", "MktNm", "SctyCtgyNm", "ISIN", "CFICd", "CrpnNm"}
+    expected_columns = {"RptDt", "TckrSymb"}
     if not expected_columns.issubset(set(df.columns)):
-        raise HTTPException(status_code=400, detail="Arquivo não possui todas as colunas obrigatórias.")
+        raise HTTPException(status_code=400, detail=f"Arquivo não possui todas as colunas obrigatórias. Colunas encontradas: {list(df.columns)}")
     
     # Conversão dos dados e inserção no banco
     records = []
     for _, row in df.iterrows():
-        record = models.Record(
-            RptDt=row["RptDt"],
-            TckrSymb=row["TckrSymb"],
-            Asst=row["Asst"],
-            AsstDesc=row["AsstDesc"],
-            SgmtNm=row["SgmtNm"],
-            MktNm=row["MktNm"],
-            SctyCtgyNm=row["SctyCtgyNm"],
-            XprtnDt=row["XprtnDt"],
-            XprtnCd=row["XprtnCd"],
-            TradgStartDt=row["TradgStartDt"],
-            TradgEndDt=row["TradgEndDt"],
-            eCd=row["eCd"],
-            ConvsCritNm=row["ConvsCritNm"],
-            MtrtyDtTrgtPt=row["MtrtyDtTrgtPt"],
-            ReqrdConvsInd=row["ReqrdConvsInd"],
-            ISIN=row["ISIN"],
-            CFICd=row["CFICd"],
-            DlvryNtceStartDt=row["DlvryNtceStartDt"],\
-            DlvryNtceEndDt=row["DlvryNtceEndDt"],
-            OptnTp=row["OptnTp"],
-            CtrctMltplr=row["CtrctMltplr"],
-            AsstQtnQty=row["AsstQtnQty"],
-            AllcnRndLot=row["AllcnRndLot"],
-            TradgCcy=row["TradgCcy"],
-            DlvryTpNm=row["DlvryTpNm"],
-            WdrwlDays=row["WdrwlDays"],
-            WrkgDays=row["WrkgDays"],
-            ClnrDays=row["ClnrDays"],
-            RlvrBasePricNm=row["RlvrBasePricNm"],
-            OpngFutrPosDay=row["OpngFutrPosDay"],
-            SdTpCd1=row["SdTpCd1"],
-            UndrlygTckrSymb1=row["UndrlygTckrSymb1"],
-            SdTpCd2=row["SdTpCd2"],
-            UndrlygTckrSymb2=row["UndrlygTckrSymb2"],
-            PureGoldWght=row["PureGoldWght"],
-            ExrcPric=row["ExrcPric"],
-            OptnStyle=row["OptnStyle"],
-            ValTpNm=row["ValTpNm"],
-            PrmUpfrntInd=row["PrmUpfrntInd"],
-            OpngPosLmtDt=row["OpngPosLmtDt"],
-            DstrbtnId=row["DstrbtnId"],
-            PricFctr=row["PricFctr"],
-            DaysToSttlm=row["DaysToSttlm"],
-            SrsTpNm=row["SrsTpNm"],
-            PrtcnFlg=row["PrtcnFlg"],
-            AutomtcExrcInd=row["AutomtcExrcInd"],
-            SpcfctnCd=row["SpcfctnCd"],
-            CrpnNm=row["CrpnNm"],
-            CorpActnStartDt=row["CorpActnStartDt"],
-            CtdyTrtmntTpNm=row["CtdyTrtmntTpNm"],
-            MktCptlstn=row["MktCptlstn"],
-            CorpGovnLvlNm=row["CorpGovnLvlNm"]
-        )
-        records.append(record)
+        try:
+            # Tente converter RptDt para um objeto datetime
+            rptdt = pd.to_datetime(row.get("RptDt"), errors='coerce')
+            if pd.isna(rptdt):
+                rptdt = None  # Ou defina uma data padrão, se necessário
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Erro ao converter a data 'RptDt': {str(e)}")
     
-    db.bulk_save_objects(records)
-    db.commit()
-    
+        try:
+            record = models.Record(
+                RptDt=rptdt,  # Atribuindo o valor convertido de RptDt
+                TckrSymb=row.get("TckrSymb"),
+                MktNm=row.get("MktNm"),
+                SctyCtgyNm=row.get("SctyCtgyNm"),
+                ISIN=row.get("ISIN"),
+                CrpnNm=row.get("CrpnNm")
+            )
+            records.append(record)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Erro ao montar o registro: {str(e)}")
+
+    # Tentando salvar os registros no banco de dados
+    try:
+        db.bulk_save_objects(records)
+        db.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao salvar no banco de dados: {str(e)}")
+
     return {"detail": "Arquivo processado com sucesso", "upload_id": upload_record.id}
