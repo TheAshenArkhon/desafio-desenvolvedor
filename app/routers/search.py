@@ -63,26 +63,3 @@ def search_records(
         })
 
     return response
-
-
-#            "RptDt": r.RptDt.strftime("%Y-%m-%d"),
-#           "TckrSymb": r.TckrSymb,
-#            "Asst": r.Asst,
-#            "AsstDesc": r.AsstDesc,
-#            "SgmtNm": r.SgmtNm,
-#            "MktNm": r.MktNm,
-#            "SctyCtgyNm": r.SctyCtgyNm,
-#            "XprtnCd": r.XprtnCd,
-#            "TradgStartDt": r.TradgStartDt,
-#            "TradgEndDt": r.TradgEndDt,
-#            "eCd": r.eCd,
-#            "ConvsCritNm": r.ConvsCritNm,
-#            "MtrtyDtTrgtPt": r.MtrtyDtTrgtPt,
-#            "ReqrdConvsInd": r.ReqrdConvsInd,
-#            "ISIN": r.ISIN,
-#           "CFICd": r.CFICd,
-#            "DlvryNtceStartDt": r.DlvryNtceStartDt,
-#            "DlvryNtceEndDt": r.DlvryNtceEndDt,
-#            "OptnTp": r.OptnTp,
-#            "CtrctMltplr": r.CtrctMltplr
-#            "CrpnNm": r.CrpnNm
